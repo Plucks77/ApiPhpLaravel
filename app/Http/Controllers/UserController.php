@@ -6,9 +6,24 @@ use App\Models\Address;
 use App\Models\City;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+
+    public function login(Request $request)
+    {
+        $user = User::where('email', $request->email)->first();
+
+        if(!$user || !Hash::check($request->password, $user->password) ){
+            return ['error' => 'Bad credentials'];
+        }
+
+        $token = $user->createToken('api-php');
+
+        return ['token' => $token->plainTextToken];
+    }
+
     public function index()
     {
         return User::all();
@@ -28,8 +43,9 @@ class UserController extends Controller
             'street' => $request->street,
             'number' => $request->number
         ]);
+        $token = $user->createToken('api-php');
 
-        return ['message' => 'ok'];
+        return ['user' => $user, 'token' => $token->plainTextToken];
     }
 
     public function update(Request $request, $id)
